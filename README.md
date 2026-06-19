@@ -12,6 +12,7 @@ A Neovim plugin for [Marp](https://marp.app/) (Markdown Presentation Ecosystem).
 - 🎨 **Theme Support**: Easily switch between Marp themes
 - ✂️ **Snippets**: Insert common Marp elements quickly
 - 🖥️ **Preview**: One-time preview without watch mode
+- 🎭 **Custom Theme Override**: Apply a theme name or CSS file only for preview/export
 - 🔧 **Dual Mode**: Support both server mode (-s) and watch mode (--watch)
 - 🐛 **Debug Mode**: Detailed logging for troubleshooting
 
@@ -83,9 +84,9 @@ use {
 | `:MarpWatch` | Start watching current file and open in browser |
 | `:MarpStop` | Stop watching current buffer |
 | `:MarpStopAll` | Stop all Marp servers |
-| `:MarpPreview` | One-time preview (opens and exits) |
+| `:MarpPreview [theme]` | One-time preview (opens and exits, optionally with a theme name or CSS file) |
 | `:MarpList` | List all active Marp servers |
-| `:MarpExport [format]` | Export to format (html/pdf/pptx/png/jpeg) |
+| `:MarpExport [format] [theme]` | Export to format (html/pdf/pptx/png/jpeg/notes, optionally with a theme name or CSS file) |
 | `:MarpTheme [theme]` | Set theme (default/gaia/uncover) |
 | `:MarpSnippet [name]` | Insert snippet |
 | `:MarpInfo` | Show current Marp information |
@@ -110,6 +111,12 @@ require('marp').setup({
 
   -- Browser command (nil = auto-detect)
   browser = nil,
+
+  -- Theme name or CSS file passed to --theme for MarpPreview/MarpExport
+  custom_theme = nil,
+
+  -- Additional theme CSS files/directories passed to --theme-set
+  theme_set = {},
 
   -- Available themes
   themes = {
@@ -136,6 +143,54 @@ require('marp').setup({
   server_mode = false,        -- Use server mode (-s) or watch mode (--watch)
   html_option = true          -- Use --html option in watch mode (default: true)
 })
+```
+
+### Custom themes
+
+You can apply a custom theme to one preview/export command without editing the deck:
+
+```vim
+:MarpPreview themes/custom.css
+:MarpExport pdf themes/custom.css
+```
+
+Or set a default theme override for preview/export:
+
+```lua
+require('marp').setup({
+  custom_theme = "themes/custom.css",
+})
+```
+
+You can register multiple shared or personal theme files with `theme_set`.
+Use `vim.fn.expand()` for `~/...` paths because marp.nvim shell-escapes paths
+before passing them to Marp CLI:
+
+```lua
+require('marp').setup({
+  theme_set = {
+    vim.fn.expand("~/src/hogehage/git/company_theme/style.css"),
+    vim.fn.expand("~/src/personal_theme/style.css"),
+  },
+})
+```
+
+If the deck has a `theme:` directive in YAML frontmatter, that value is used
+instead of the command argument or `custom_theme` setting:
+
+```lua
+require('marp').setup({
+  theme_set = {
+    vim.fn.expand("~/src/hogehage/git/company_theme/style.css"),
+  },
+})
+```
+
+```markdown
+---
+marp: true
+theme: custom_theme
+---
 ```
 
 ## Usage Example
@@ -195,6 +250,7 @@ require('marp').setup({ server_mode = true })
 - 🎨 **テーマサポート**: Marpテーマの簡単な切り替え
 - ✂️ **スニペット**: よく使うMarp要素を素早く挿入
 - 🖥️ **プレビュー**: ウォッチモードなしの一回限りのプレビュー
+- 🎭 **カスタムテーマ上書き**: プレビュー/エクスポート時だけテーマ名またはCSSファイルを適用
 - 🔧 **デュアルモード**: サーバーモード(-s)とウォッチモード(--watch)の両方をサポート
 - 🐛 **デバッグモード**: トラブルシューティング用の詳細ログ
 
@@ -262,9 +318,9 @@ use {
 | `:MarpWatch` | 現在のファイルの監視を開始しブラウザで開く |
 | `:MarpStop` | 現在のバッファの監視を停止 |
 | `:MarpStopAll` | すべてのMarpサーバーを停止 |
-| `:MarpPreview` | 一回限りのプレビュー |
+| `:MarpPreview [テーマ]` | 一回限りのプレビュー（任意でテーマ名またはCSSファイルを指定） |
 | `:MarpList` | アクティブなMarpサーバーを一覧表示 |
-| `:MarpExport [形式]` | 指定形式でエクスポート (html/pdf/pptx/png/jpeg) |
+| `:MarpExport [形式] [テーマ]` | 指定形式でエクスポート (html/pdf/pptx/png/jpeg/notes、任意でテーマ名またはCSSファイルを指定) |
 | `:MarpTheme [テーマ]` | テーマを設定 (default/gaia/uncover) |
 | `:MarpSnippet [名前]` | スニペットを挿入 |
 | `:MarpInfo` | 現在のMarp情報を表示 |
@@ -289,6 +345,12 @@ require('marp').setup({
 
   -- ブラウザコマンド（nil = 自動検出）
   browser = nil,
+
+  -- MarpPreview/MarpExportで--themeに渡すテーマ名またはCSSファイル
+  custom_theme = nil,
+
+  -- --theme-setに渡す追加テーマCSSファイル/ディレクトリ
+  theme_set = {},
 
   -- 利用可能なテーマ
   themes = {
@@ -315,6 +377,54 @@ require('marp').setup({
   server_mode = false,        -- サーバーモード(-s)またはウォッチモード(--watch)を使用
   html_option = true          -- ウォッチモードで--htmlオプションを使用（デフォルト: true）
 })
+```
+
+### カスタムテーマ
+
+Markdownを編集せずに、1回のプレビュー/エクスポートだけカスタムテーマを適用できます：
+
+```vim
+:MarpPreview themes/custom.css
+:MarpExport pdf themes/custom.css
+```
+
+プレビュー/エクスポートのデフォルト上書きテーマとして設定することもできます：
+
+```lua
+require('marp').setup({
+  custom_theme = "themes/custom.css",
+})
+```
+
+`theme_set`には共有テーマや個人テーマを複数指定できます。marp.nvimはパスを
+shell escapeしてMarp CLIへ渡すため、`~/...`形式のパスは`vim.fn.expand()`で
+展開してください：
+
+```lua
+require('marp').setup({
+  theme_set = {
+    vim.fn.expand("~/src/hogehage/git/company_theme/style.css"),
+    vim.fn.expand("~/src/personal_theme/style.css"),
+  },
+})
+```
+
+MarkdownのYAML frontmatterに`theme:`がある場合は、コマンド引数や`custom_theme`
+設定よりその値を優先します：
+
+```lua
+require('marp').setup({
+  theme_set = {
+    vim.fn.expand("~/src/hogehage/git/company_theme/style.css"),
+  },
+})
+```
+
+```markdown
+---
+marp: true
+theme: custom_theme
+---
 ```
 
 ## 使用例

@@ -13,14 +13,14 @@ EOF
 command! MarpWatch lua require('marp').watch()
 command! MarpStop lua require('marp').stop()
 command! MarpStopAll lua require('marp').stop_all()
-command! MarpPreview lua require('marp').preview()
+command! -nargs=? -complete=file MarpPreview lua require('marp').preview(<q-args>)
 command! MarpList lua require('marp').list_active()
 command! MarpInfo lua require('marp').info()
 command! MarpCopyPath lua require('marp').copy_html_path()
 command! MarpDebug lua require('marp').debug()
 
 " Export commands
-command! -nargs=? -complete=customlist,s:complete_export_formats MarpExport lua require('marp').export(<q-args>)
+command! -nargs=* -complete=customlist,s:complete_export_args MarpExport lua require('marp').export(<q-args>)
 
 " Thumbnail command (first slide only)
 command! -nargs=? -complete=customlist,s:complete_thumbnail_formats MarpThumbnail lua require('marp').thumbnail(<q-args>)
@@ -32,8 +32,12 @@ command! -nargs=1 -complete=customlist,s:complete_themes MarpTheme lua require('
 command! -nargs=1 -complete=customlist,s:complete_snippets MarpSnippet lua require('marp').insert_snippet(<q-args>)
 
 " Completion functions
-function! s:complete_export_formats(A, L, P)
-  return ['html', 'pdf', 'pptx', 'png', 'jpeg', 'notes']
+function! s:complete_export_args(A, L, P)
+  let l:args = split(a:L)
+  if len(l:args) <= 1 || (len(l:args) == 2 && a:L !~# '\s$')
+    return ['html', 'pdf', 'pptx', 'png', 'jpeg', 'notes']
+  endif
+  return getcompletion(a:A, 'file')
 endfunction
 
 function! s:complete_thumbnail_formats(A, L, P)

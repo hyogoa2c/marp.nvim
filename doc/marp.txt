@@ -38,8 +38,12 @@ COMMANDS                                                        *marp-commands*
 :MarpStopAll                                                      *:MarpStopAll*
     Stop all active Marp servers.
 
-:MarpPreview                                                      *:MarpPreview*
+:MarpPreview [{theme}]                                           *:MarpPreview*
     Open a one-time preview of the current file.
+    {theme} may be a built-in theme name or a CSS file path passed to Marp
+    CLI's --theme option.
+    If YAML frontmatter has a theme: directive, it takes precedence and
+    marp.nvim will not pass --theme.
 
 :MarpList                                                            *:MarpList*
     List all active Marp servers.
@@ -52,10 +56,14 @@ COMMANDS                                                        *marp-commands*
     Copy the HTML file path to clipboard. Useful when you need to share
     or access the generated HTML file directly.
 
-:MarpExport [{format}]                                             *:MarpExport*
+:MarpExport [{format}] [{theme}]                                   *:MarpExport*
     Export the current file to the specified format.
-    Available formats: html, pdf, pptx, png, jpeg
+    Available formats: html, pdf, pptx, png, jpeg, notes
     Default: html
+    {theme} may be a built-in theme name or a CSS file path passed to Marp
+    CLI's --theme option.
+    If YAML frontmatter has a theme: directive, it takes precedence and
+    marp.nvim will not pass --theme.
 
 :MarpTheme {theme}                                                  *:MarpTheme*
     Set the theme for the current presentation.
@@ -103,6 +111,30 @@ export_formats                                           *marp.export_formats*
         jpeg = "--images jpeg"
     }
 
+custom_theme                                               *marp.custom_theme*
+    Theme name or CSS file path passed to Marp CLI's --theme option for
+    preview and export commands.
+    If YAML frontmatter has a theme: directive, the frontmatter value takes
+    precedence.
+    Default: nil
+
+theme_set                                                       *marp.theme_set*
+    List of additional theme CSS file paths or directories passed to Marp CLI's
+    --theme-set option.
+    Multiple entries are supported. Relative paths are resolved from the Marp
+    CLI working directory, usually the nearest Marp config directory or the
+    Markdown file directory. Use vim.fn.expand("~/...") for home-relative paths.
+
+    Example:
+        require('marp').setup({
+            theme_set = {
+                vim.fn.expand("~/src/hogehage/git/company_theme/style.css"),
+                vim.fn.expand("~/src/personal_theme/style.css")
+            }
+        })
+
+    Default: {}
+
 show_tips                                                     *marp.show_tips*
     Show helpful tips after starting the server.
     Default: true
@@ -131,11 +163,13 @@ require('marp').stop([bufnr])                                      *marp.stop*
 require('marp').stop_all()                                    *marp.stop_all*
     Stop all active servers.
 
-require('marp').preview()                                       *marp.preview*
-    Open a one-time preview.
+require('marp').preview([theme])                                *marp.preview*
+    Open a one-time preview. The optional {theme} overrides the theme with a
+    built-in theme name or CSS file path.
 
-require('marp').export([format])                                *marp.export*
-    Export the current file.
+require('marp').export([format], [theme])                        *marp.export*
+    Export the current file. The optional {theme} overrides the theme with a
+    built-in theme name or CSS file path.
 
 require('marp').set_theme(theme)                             *marp.set_theme*
     Set the presentation theme.

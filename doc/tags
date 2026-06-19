@@ -23,6 +23,7 @@ marp-snippets	marp.txt	/*marp-snippets*
 marp.auto_copy_path	marp.txt	/*marp.auto_copy_path*
 marp.browser	marp.txt	/*marp.browser*
 marp.copy_html_path	marp.txt	/*marp.copy_html_path*
+marp.custom_theme	marp.txt	/*marp.custom_theme*
 marp.export	marp.txt	/*marp.export*
 marp.export_formats	marp.txt	/*marp.export_formats*
 marp.info	marp.txt	/*marp.info*
@@ -37,5 +38,6 @@ marp.stop	marp.txt	/*marp.stop*
 marp.stop_all	marp.txt	/*marp.stop_all*
 marp.suggest_gitignore	marp.txt	/*marp.suggest_gitignore*
 marp.themes	marp.txt	/*marp.themes*
+marp.theme_set	marp.txt	/*marp.theme_set*
 marp.txt	marp.txt	/*marp.txt*
 marp.watch	marp.txt	/*marp.watch*

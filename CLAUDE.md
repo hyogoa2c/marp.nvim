@@ -20,7 +20,8 @@ make format  # stylua 自動修正
 |---------|-------------|
 | `:MarpWatch` | ライブプレビュー開始 |
 | `:MarpStop` / `:MarpStopAll` | プレビュー停止 |
-| `:MarpExport [format]` | エクスポート（html/pdf/pptx/png/jpeg/notes） |
+| `:MarpPreview [theme]` | 単発プレビュー（themeはテーマ名またはCSSパス） |
+| `:MarpExport [format] [theme]` | エクスポート（html/pdf/pptx/png/jpeg/notes、themeは任意） |
 | `:MarpThumbnail [format]` | 最初のスライドのみ画像化（png/jpeg） |
 | `:MarpTheme` / `:MarpSnippet` | テーマ設定・スニペット挿入 |
 | `:MarpInfo` / `:MarpDebug` | 情報表示・診断 |
@@ -38,7 +39,8 @@ require('marp').setup({
   pptx_editable = false,        -- 編集可能PPTX
   image_scale = 1,              -- 画像倍率
   jpeg_quality = 85,            -- JPEG品質
-  theme_set = {},               -- カスタムテーマCSS
+  custom_theme = nil,           -- preview/exportで--themeに渡すテーマ
+  theme_set = {},               -- カスタムテーマCSS（複数可、~/...はexpand推奨）
 })
 ```
 

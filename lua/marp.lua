@@ -48,6 +48,7 @@ M.config = {
   image_scale = 1, -- Scale factor for rendered images (2 for retina)
   jpeg_quality = 85, -- JPEG image quality (1-100)
   -- Theme options
+  custom_theme = nil, -- Theme name or CSS path passed to --theme for preview/export
   theme_set = {}, -- Additional theme CSS file paths
 }
 
@@ -60,6 +61,42 @@ end
 local function clean_ansi(str)
   -- Remove ANSI escape sequences (colors, formatting, etc.)
   return str:gsub("\27%[[%d;]*m", ""):gsub("\27%[[%d;]*[A-Za-z]", "")
+end
+
+local function normalize_arg(value)
+  if value == nil then
+    return nil
+  end
+
+  value = vim.trim(tostring(value))
+  if value == "" then
+    return nil
+  end
+
+  return value
+end
+
+local function get_frontmatter_theme(bufnr)
+  bufnr = bufnr or 0
+  local lines = vim.api.nvim_buf_get_lines(bufnr, 0, -1, false)
+
+  if lines[1] ~= "---" then
+    return nil
+  end
+
+  for i = 2, #lines do
+    local line = lines[i]
+    if line == "---" then
+      break
+    end
+
+    local theme = normalize_arg(line:match("^%s*theme%s*:%s*(.-)%s*$"))
+    if theme then
+      return theme
+    end
+  end
+
+  return nil
 end
 
 -- Find project root by looking for Marp config files
@@ -101,12 +138,34 @@ end
 local function get_common_options()
   local opts = {}
   for _, path in ipairs(M.config.theme_set or {}) do
-    table.insert(opts, "--theme-set '" .. path .. "'")
+    table.insert(opts, "--theme-set " .. vim.fn.shellescape(path))
   end
   if #opts > 0 then
     return " " .. table.concat(opts, " ")
   end
   return ""
+end
+
+local function get_theme_option(theme, bufnr)
+  if get_frontmatter_theme(bufnr) then
+    return ""
+  end
+
+  theme = normalize_arg(theme) or normalize_arg(M.config.custom_theme)
+  if theme then
+    return " --theme " .. vim.fn.shellescape(theme)
+  end
+  return ""
+end
+
+local function parse_export_args(args)
+  args = normalize_arg(args)
+  if not args then
+    return nil, nil
+  end
+
+  local first, rest = args:match("^(%S+)%s*(.*)$")
+  return first, normalize_arg(rest)
 end
 
 -- Build format-specific options for export
@@ -407,15 +466,22 @@ function M.stop_all()
 end
 
 -- Export current file
-function M.export(format)
-  local file = vim.api.nvim_buf_get_name(0)
+function M.export(format, theme)
+  local bufnr = vim.api.nvim_get_current_buf()
+  local file = vim.api.nvim_buf_get_name(bufnr)
 
   if file == "" or not file:match("%.md$") then
     vim.notify("Not a markdown file", vim.log.levels.ERROR)
     return
   end
 
-  format = format or "html"
+  if theme == nil then
+    local parsed_format, parsed_theme = parse_export_args(format)
+    format = parsed_format
+    theme = parsed_theme
+  end
+
+  format = normalize_arg(format) or "html"
   local export_flag = M.config.export_formats[format]
 
   if not export_flag then
@@ -428,8 +494,18 @@ function M.export(format)
   local allow_local = M.config.allow_local_files and " --allow-local-files" or ""
   local common_opts = get_common_options()
   local format_opts = get_export_options(format)
+  local theme_opt = get_theme_option(theme, bufnr)
   local output_file = file:gsub("%.md$", "")
-  local cmd = string.format("%s %s '%s'%s%s%s", marp_cmd, export_flag, file, allow_local, common_opts, format_opts)
+  local cmd = string.format(
+    "%s %s '%s'%s%s%s%s",
+    marp_cmd,
+    export_flag,
+    file,
+    allow_local,
+    common_opts,
+    format_opts,
+    theme_opt
+  )
 
   -- Determine output filename
   local ext_map = {
@@ -505,8 +581,9 @@ function M.export(format)
 end
 
 -- Preview current file (one-time)
-function M.preview()
-  local file = vim.api.nvim_buf_get_name(0)
+function M.preview(theme)
+  local bufnr = vim.api.nvim_get_current_buf()
+  local file = vim.api.nvim_buf_get_name(bufnr)
 
   if file == "" or not file:match("%.md$") then
     vim.notify("Not a markdown file", vim.log.levels.ERROR)
@@ -517,7 +594,8 @@ function M.preview()
   local project_root = find_marp_config_dir(file)
   local allow_local = M.config.allow_local_files and " --allow-local-files" or ""
   local common_opts = get_common_options()
-  local cmd = string.format("%s -p '%s'%s%s", marp_cmd, file, allow_local, common_opts)
+  local theme_opt = get_theme_option(theme, bufnr)
+  local cmd = string.format("%s -p '%s'%s%s%s", marp_cmd, file, allow_local, common_opts, theme_opt)
 
   local shell_cmd = { "/bin/sh", "-c", cmd }
   vim.fn.jobstart(shell_cmd, {
