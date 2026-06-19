@@ -496,16 +496,8 @@ function M.export(format, theme)
   local format_opts = get_export_options(format)
   local theme_opt = get_theme_option(theme, bufnr)
   local output_file = file:gsub("%.md$", "")
-  local cmd = string.format(
-    "%s %s '%s'%s%s%s%s",
-    marp_cmd,
-    export_flag,
-    file,
-    allow_local,
-    common_opts,
-    format_opts,
-    theme_opt
-  )
+  local cmd =
+    string.format("%s %s '%s'%s%s%s%s", marp_cmd, export_flag, file, allow_local, common_opts, format_opts, theme_opt)
 
   -- Determine output filename
   local ext_map = {
@@ -523,6 +515,7 @@ function M.export(format, theme)
   local shell_cmd = { "/bin/sh", "-c", cmd }
   vim.fn.jobstart(shell_cmd, {
     cwd = project_root,
+    stdin = "null",
     stdout_buffered = false,
     stderr_buffered = false,
     detach = true,
@@ -600,6 +593,7 @@ function M.preview(theme)
   local shell_cmd = { "/bin/sh", "-c", cmd }
   vim.fn.jobstart(shell_cmd, {
     cwd = project_root,
+    stdin = "null",
     stdout_buffered = false,
     stderr_buffered = false,
     detach = true,
@@ -674,6 +668,7 @@ function M.thumbnail(format)
   local shell_cmd = { "/bin/sh", "-c", cmd }
   vim.fn.jobstart(shell_cmd, {
     cwd = project_root,
+    stdin = "null",
     stdout_buffered = false,
     stderr_buffered = false,
     detach = true,
@@ -1075,6 +1070,7 @@ function M.debug()
   local shell_cmd = { "/bin/sh", "-c", test_cmd }
   vim.fn.jobstart(shell_cmd, {
     cwd = project_root,
+    stdin = "null",
     stdout_buffered = false,
     stderr_buffered = false,
     detach = true,
